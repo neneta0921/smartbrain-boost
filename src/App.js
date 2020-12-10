@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
 import Particles from 'react-particles-js';
+import Clarifai from 'clarifai';
 
 import Navigation from './components/Navigation/Navigation';
 import Logo from './components/Logo/Logo';
 import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
 import Rank from './components/Rank/Rank';
+import FaceDetection from './components/FaceDetection/FaceDetection';
 import './App.css';
 
 // HEADS UP! Sometimes the Clarifai Models can be down or not working as they are constantly getting updated.
@@ -16,8 +18,9 @@ import './App.css';
 // .predict(Clarifai.FACE_DETECT_MODEL, this.state.input)
 // to:
 // .predict('c0c0ac362b03416da06ab3fa36fb58e3', this.state.input)
+
 const app = new Clarifai.App({
-  apikey: 'c2965edda9cd42cba2fd0383dda649ae',
+  apiKey: 'c2965edda9cd42cba2fd0383dda649ae',
 });
 
 const particlesOptions = {
@@ -37,16 +40,25 @@ class App extends Component {
     super();
     this.state = {
       input: '',
+      imageUrl: '',
     };
   }
 
   onInputChange = (event) => {
-    console.log(event.target.value);
+    this.setState({ input: event.target.value });
   };
 
   onButtonSubmit = () => {
-    console.log('click');
-    app.models.predict(Clarifai.FACE_DETECT_MODEL, this.state.input);
+    this.setState({ imageUrl: this.state.input });
+    app.models
+      .predict(
+        Clarifai.FACE_DETECT_MODEL,
+        // this.state.imageUrl だとPOST:400エラーが起こるので注意
+        this.state.input
+      )
+      .then((response) => {
+        console.log(response.outputs[0].data.regions[0].region_info.bounding_box);
+      });
   };
 
   render() {
@@ -57,7 +69,7 @@ class App extends Component {
         <Logo />
         <Rank />
         <ImageLinkForm onInputChange={this.onInputChange} onButtonSubmit={this.onButtonSubmit} />
-        {/* <FaceRecognition />} */}
+        <FaceDetection imageUrl={this.state.imageUrl} />
       </div>
     );
   }
