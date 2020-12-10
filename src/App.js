@@ -41,8 +41,28 @@ class App extends Component {
     this.state = {
       input: '',
       imageUrl: '',
+      box: {},
     };
   }
+
+  calculateFaceLocation = (data) => {
+    const detectedFace = data.outputs[0].data.regions[0].region_info.bounding_box;
+    const image = document.getElementById('inputimage');
+    const width = Number(image.width);
+    const height = Number(image.height);
+    console.log(width, height);
+    return {
+      leftCol: detectedFace.left_col * width,
+      topRow: detectedFace.top_row * height,
+      rightCol: width - detectedFace.right_col * width,
+      bottomRow: height - detectedFace.bottom_row * height,
+    };
+  };
+
+  displayFaceBox = (box) => {
+    console.log(box);
+    this.setState({ box: box });
+  };
 
   onInputChange = (event) => {
     this.setState({ input: event.target.value });
@@ -51,14 +71,10 @@ class App extends Component {
   onButtonSubmit = () => {
     this.setState({ imageUrl: this.state.input });
     app.models
-      .predict(
-        Clarifai.FACE_DETECT_MODEL,
-        // this.state.imageUrl だとPOST:400エラーが起こるので注意
-        this.state.input
-      )
-      .then((response) => {
-        console.log(response.outputs[0].data.regions[0].region_info.bounding_box);
-      });
+      // this.state.imageUrl だとPOST:400エラーが起こるので注意
+      .predict(Clarifai.FACE_DETECT_MODEL, this.state.input)
+      .then((response) => this.displayFaceBox(this.calculateFaceLocation(response)))
+      .catch((err) => console.log(err));
   };
 
   render() {
@@ -69,7 +85,7 @@ class App extends Component {
         <Logo />
         <Rank />
         <ImageLinkForm onInputChange={this.onInputChange} onButtonSubmit={this.onButtonSubmit} />
-        <FaceDetection imageUrl={this.state.imageUrl} />
+        <FaceDetection box={this.state.box} imageUrl={this.state.imageUrl} />
       </div>
     );
   }
