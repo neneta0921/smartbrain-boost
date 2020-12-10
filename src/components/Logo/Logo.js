@@ -1,10 +1,17 @@
 import React from 'react';
+import Tilt from 'react-tilt';
+import brain from './brain.svg';
+import './Logo.css';
 
 const Logo = () => {
   return (
-    <nav style={{ display: 'flex', justifyContent: 'flex-end' }}>
-      <p className="f3 link dim black underline pa3 pointer">Sign Out</p>
-    </nav>
+    <div className="ma4 mt0">
+      <Tilt className="Tilt br2 shadow-2" options={{ max: 55 }} style={{ height: 150, width: 150 }}>
+        <div className="Tilt-inner pa3">
+          <img src={brain} alt="logo" />
+        </div>
+      </Tilt>
+    </div>
   );
 };
 
