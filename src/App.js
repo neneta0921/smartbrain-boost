@@ -46,41 +46,57 @@ class App extends Component {
       box: {},
       route: 'signin',
       isSignedIn: false,
+      boundingBox: [],
     };
   }
 
   calculateFaceLocation = (data) => {
-    // console.log(data);
-    // const regions = data.outputs[0].data.regions;
-    // const faceBox = regions.map((region) => {
-    // const detectedFace = region.region_info.bounding_box;
+    const regions = data.outputs[0].data.regions;
+    const faceBox = regions.map((region) => {
+      const detectedFace = region.region_info.bounding_box;
+      const image = document.getElementById('inputimage');
+      const width = Number(image.width);
+      const height = Number(image.height);
+      return {
+        leftCol: detectedFace.left_col * width,
+        topRow: detectedFace.top_row * height,
+        rightCol: width - detectedFace.right_col * width,
+        bottomRow: height - detectedFace.bottom_row * height,
+      };
+    });
+    return faceBox;
+
+    // const detectedFace = data.outputs[0].data.regions[0].region_info.bounding_box;
     // const image = document.getElementById('inputimage');
     // const width = Number(image.width);
     // const height = Number(image.height);
-    // console.log(width, height);
     // return {
-    // leftCol: detectedFace.left_col * width,
-    // topRow: detectedFace.top_row * height,
-    // rightCol: width - detectedFace.right_col * width,
-    // bottomRow: height - detectedFace.bottom_row * height,
+    //   leftCol: detectedFace.left_col * width,
+    //   topRow: detectedFace.top_row * height,
+    //   rightCol: width - detectedFace.right_col * width,
+    //   bottomRow: height - detectedFace.bottom_row * height,
     // };
-    // });
-    // return faceBox;
-
-    const detectedFace = data.outputs[0].data.regions[0].region_info.bounding_box;
-    const image = document.getElementById('inputimage');
-    const width = Number(image.width);
-    const height = Number(image.height);
-    return {
-      leftCol: detectedFace.left_col * width,
-      topRow: detectedFace.top_row * height,
-      rightCol: width - detectedFace.right_col * width,
-      bottomRow: height - detectedFace.bottom_row * height,
-    };
   };
 
   displayFaceBox = (box) => {
     this.setState({ box: box });
+  };
+
+  createBoundingBox = (boxArray) => {
+    const boundingBox = boxArray.map((box, i) => {
+      return (
+        <div
+          key={i}
+          className="bounding-box"
+          style={{
+            top: box.topRow,
+            right: box.rightCol,
+            bottom: box.bottomRow,
+            left: box.leftCol,
+          }}></div>
+      );
+    });
+    this.setState({ boundingBox: boundingBox }) ;
   };
 
   onInputChange = (event) => {
@@ -93,6 +109,7 @@ class App extends Component {
       // this.state.imageUrl だとPOST:400エラーが起こるので注意
       .predict(Clarifai.FACE_DETECT_MODEL, this.state.input)
       .then((response) => this.displayFaceBox(this.calculateFaceLocation(response)))
+      .then(() => this.createBoundingBox(this.state.box))
       .catch((err) => console.log(err))
   };
 
@@ -106,7 +123,7 @@ class App extends Component {
   };
 
   render() {
-    const { isSignedIn, imageUrl, route, box } = this.state;
+    const { isSignedIn, imageUrl, route, box, boundingBox } = this.state;
     return (
       <div className="App">
         <Particles className="particles" params={particlesOptions} />
@@ -120,7 +137,7 @@ class App extends Component {
                 onInputChange={this.onInputChange}
                 onButtonSubmit={this.onButtonSubmit}
               />
-              <FaceDetection box={box} imageUrl={imageUrl} />
+              <FaceDetection box={box} imageUrl={imageUrl} boundingBox={boundingBox} />
             </div>
             )
           : ( route === 'signin'
