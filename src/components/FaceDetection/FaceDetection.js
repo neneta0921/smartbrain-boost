@@ -5,7 +5,7 @@ const FaceDetection = ({ box, imageUrl, boundingBox }) => {
   return (
     <div className="center ma">
       <div className="absolute mt2">
-        <img id="inputimage" alt="result" src={imageUrl} width="500px" height="auto" />
+        <img id="inputimage" alt="" src={imageUrl} width="500px" height="auto" />
         {boundingBox}
       </div>
     </div>
