@@ -53,7 +53,7 @@ class App extends Component {
         email: '',
         entries: 0,
         joined: ''
-      }
+      },
     };
   }
 
@@ -126,12 +126,27 @@ class App extends Component {
     this.setState({ input: event.target.value });
   };
 
-  onButtonSubmit = () => {
+  onPictureSubmit = () => {
     this.setState({ imageUrl: this.state.input })
     app.models
       // this.state.imageUrl だとPOST:400エラーが起こるので注意
       .predict(Clarifai.FACE_DETECT_MODEL, this.state.input)
-      .then((response) => this.displayFaceBox(this.calculateFaceLocation(response)))
+      .then((response) => {
+        if(response) {
+          fetch('http://localhost:3000/image', {
+            method: 'put',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: this.state.user.id
+            })
+          })
+            .then(response => response.json())
+            .then(count => {
+              this.setState(Object.assign(this.state.user, {entries: count}))
+            })
+        }
+        this.displayFaceBox(this.calculateFaceLocation(response))
+      })
       .then(() => this.createBoundingBox(this.state.box))
       .catch((err) => console.log(err))
   };
@@ -146,7 +161,7 @@ class App extends Component {
   };
 
   render() {
-    const { isSignedIn, imageUrl, route, box, boundingBox } = this.state;
+    const { isSignedIn, imageUrl, route, box, boundingBox, user } = this.state;
     return (
       <div className="App">
         <Particles className="particles" params={particlesOptions} />
@@ -155,16 +170,16 @@ class App extends Component {
           ? (
             <div>
               <Logo />
-              <Rank />
+              <Rank name={user.name} entries={user.entries} />
               <ImageLinkForm
                 onInputChange={this.onInputChange}
-                onButtonSubmit={this.onButtonSubmit}
+                onPictureSubmit={this.onPictureSubmit}
               />
               <FaceDetection box={box} imageUrl={imageUrl} boundingBox={boundingBox} />
             </div>
             )
           : ( route === 'signin'
-              ? <Signin onRouteChange={this.onRouteChange} />
+              ? <Signin loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
               : <Register loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
             )
         }

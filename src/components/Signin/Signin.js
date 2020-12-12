@@ -6,6 +6,7 @@ class Signin extends React.Component {
     this.state = {
       signInEmail: '',
       signInPassword: '',
+      isExisted: false,
     }
   }
 
@@ -17,8 +18,22 @@ class Signin extends React.Component {
     this.setState({ signInPassword: event.target.value })
   }
 
+  isExistedUser = (id) => {
+    fetch(`http://localhost:3000/profile/${id}`, {
+          method: 'get',
+          headers: { 'Content-Type': 'application/json' },
+    })
+      .then((response) => {
+        if (response === 'no such user') {
+          this.setState({ isExisted: false })
+        } else {
+          this.setState({ isExisted: true })
+        }
+      })
+      .catch((err) => console.log(err))
+  }
+
   onSubmitSingIn = () => {
-    // console.log(this.state);
     fetch('http://localhost:3000/signin', {
       method: 'post',
       headers: { 'Content-Type': 'application/json' },
@@ -28,10 +43,16 @@ class Signin extends React.Component {
       })
     })
       .then(response => response.json())
-      .then(data => {
-        if (data === 'success') {
+      .then(user => {
+        this.isExistedUser(user.id)
+        console.log(this.state);
+        if (this.state.isExisted) {
+          this.props.loadUser(user);
           this.props.onRouteChange('home');
         }
+        // if (data === 'success') {
+        //   this.props.onRouteChange('home');
+        // }
       })
   }
 
