@@ -47,6 +47,7 @@ class Signin extends React.Component {
         this.isExistedUser(user.id)
         console.log(this.state);
         if (this.state.isExisted) {
+        // if (user.id) {
           this.props.loadUser(user);
           this.props.onRouteChange('home');
         }
