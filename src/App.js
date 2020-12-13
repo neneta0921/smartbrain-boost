@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Particles from 'react-particles-js';
-import Clarifai from 'clarifai';
+// import Clarifai from 'clarifai';
 
 import Navigation from './components/Navigation/Navigation';
 import Signin from './components/Signin/Signin';
@@ -11,17 +11,17 @@ import Rank from './components/Rank/Rank';
 import FaceDetection from './components/FaceDetection/FaceDetection';
 import './App.css';
 
-const particlesOptions = {
+const particlesOptions={
   particles: {
-    number: {
-      value: 30,
-      density: {
+    number:{
+      value: 200,
+      density:{
         enable: true,
-        value_area: 800,
-      },
-    },
-  },
-};
+        value_area:800
+      }
+    }
+  }
+}
 
 const initialState = {
   input: '',
