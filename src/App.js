@@ -29,10 +29,9 @@ const particlesOptions={
 const initialState = {
   input: '',
   imageUrl: '',
-  box: {},
+  boxes: [],
   route: 'signin',
   isSignedIn: false,
-  boundingBox: [],
   user: {
     id: '',
     name: '',
@@ -58,10 +57,9 @@ class App extends Component {
     }})
   }
 
-  calculateFaceLocation = (data) => {
-    const regions = data.outputs[0].data.regions;
-    const faceBox = regions.map((region) => {
-      const detectedFace = region.region_info.bounding_box;
+  calculateFaceLocations = (data) => {
+    return data.outputs[0].data.regions.map((face) => {
+      const detectedFace = face.region_info.bounding_box;
       const image = document.getElementById('inputimage');
       const width = Number(image.width);
       const height = Number(image.height);
@@ -72,15 +70,14 @@ class App extends Component {
         bottomRow: height - detectedFace.bottom_row * height,
       };
     });
-    return faceBox;
   };
 
-  displayFaceBox = (box) => {
-    this.setState({ box: box });
+  displayFaceBoxes = (boxes) => {
+    this.setState({ boxes: boxes });
   };
 
-  createBoundingBox = (boxArray) => {
-    const boundingBox = boxArray.map((box, i) => {
+  createBoundingBox = (boxes) => {
+    const boundingBox = boxes.map((box, i) => {
       return (
         <div
           key={i}
@@ -125,9 +122,9 @@ class App extends Component {
             })
             .catch(console.log)
         }
-        this.displayFaceBox(this.calculateFaceLocation(response))
+        this.displayFaceBoxes(this.calculateFaceLocations(response))
       })
-      .then(() => this.createBoundingBox(this.state.box))
+      .then(() => this.createBoundingBox(this.state.boxes))
       .catch((err) => console.log(err))
   };
 
@@ -141,7 +138,7 @@ class App extends Component {
   };
 
   render() {
-    const { isSignedIn, imageUrl, route, box, boundingBox, user } = this.state;
+    const { isSignedIn, imageUrl, route, boxes, boundingBox, user } = this.state;
 
     return (
       <div className="App">
@@ -156,7 +153,7 @@ class App extends Component {
                 onInputChange={this.onInputChange}
                 onPictureSubmit={this.onPictureSubmit}
               />
-              <FaceDetection box={box} imageUrl={imageUrl} boundingBox={boundingBox} />
+              <FaceDetection boxes={boxes} imageUrl={imageUrl} />
             </div>
             )
           : ( route === 'signin'
