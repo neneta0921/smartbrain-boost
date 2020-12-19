@@ -1,5 +1,8 @@
 import React from 'react';
 
+import urlConfig from '../../urlConfig';
+const REGISTER_URL = urlConfig().url.REGISTER_URL;
+
 class Register extends React.Component {
   constructor (props) {
     super(props);
@@ -24,7 +27,7 @@ class Register extends React.Component {
 
   onSubmitSingIn = () => {
     // console.log(this.state);
-    fetch('https://aqueous-inlet-35144.herokuapp.com/register', {
+    fetch(REGISTER_URL, {
       method: 'post',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

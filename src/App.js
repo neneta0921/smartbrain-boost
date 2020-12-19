@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import Particles from 'react-particles-js';
-// import Clarifai from 'clarifai';
 
 import Navigation from './components/Navigation/Navigation';
 import Signin from './components/Signin/Signin';
@@ -10,6 +9,10 @@ import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
 import Rank from './components/Rank/Rank';
 import FaceDetection from './components/FaceDetection/FaceDetection';
 import './App.css';
+
+import urlConfig from './urlConfig';
+const API_URL = urlConfig().url.API_URL;
+const IMAGE_URL = urlConfig().url.IMAGE_URL;
 
 const particlesOptions={
   particles: {
@@ -99,7 +102,7 @@ class App extends Component {
 
   onPictureSubmit = () => {
     this.setState({ imageUrl: this.state.input });
-    fetch('https://aqueous-inlet-35144.herokuapp.com/imageurl', {
+    fetch(API_URL, {
       method: 'post',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -109,7 +112,7 @@ class App extends Component {
       .then(response => response.json())
       .then((response) => {
         if(response) {
-          fetch('https://aqueous-inlet-35144.herokuapp.com/image', {
+          fetch(IMAGE_URL, {
             method: 'put',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -139,6 +142,7 @@ class App extends Component {
 
   render() {
     const { isSignedIn, imageUrl, route, box, boundingBox, user } = this.state;
+
     return (
       <div className="App">
         <Particles className="particles" params={particlesOptions} />

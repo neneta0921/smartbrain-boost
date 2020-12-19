@@ -1,5 +1,8 @@
 import React from 'react';
 
+import urlConfig from '../../urlConfig';
+const SIGNIN_URL = urlConfig().url.SIGNIN_URL;
+
 class Signin extends React.Component {
   constructor (props) {
     super(props);
@@ -18,7 +21,7 @@ class Signin extends React.Component {
   }
 
   onSubmitSingIn = () => {
-    fetch('https://aqueous-inlet-35144.herokuapp.com/signin', {
+    fetch(SIGNIN_URL, {
       method: 'post',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
