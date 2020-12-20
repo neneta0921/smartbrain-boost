@@ -22,10 +22,11 @@ const ProfileIcon = (props) => {
               style={{marginBottom: '0'}} />
         </DropdownToggle>
         <DropdownMenu
-          className='b--transparent shadow-5'
+          right
+          className="b--transparent shadow-5"
           style={{marginTop: '0', backgroundColor: 'rgba(255, 255, 255, 0.5)'}}>
-          <DropdownItem>View Profile</DropdownItem>
-          <DropdownItem>Singout</DropdownItem>
+          <DropdownItem onClick={props.toggleModal}>View Profile</DropdownItem>
+          <DropdownItem onClick={() => props.onRouteChange('signout')}>Sing Out</DropdownItem>
         </DropdownMenu>
       </ButtonDropdown>
     </div>
