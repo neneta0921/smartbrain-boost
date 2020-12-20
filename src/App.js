@@ -32,17 +32,19 @@ const initialState = {
   input: '',
   imageUrl: '',
   boxes: [],
-  // route: 'signin',
-  // isSignedIn: false,
-  route: 'home',
-  isSignedIn: true,
+  route: 'signin',
+  isSignedIn: false,
+  // route: 'home',
+  // isSignedIn: true,
   isProfileOpen: false,
   user: {
     id: '',
     name: '',
     email: '',
     entries: 0,
-    joined: ''
+    joined: '',
+    age: '',
+    pet: ''
   },
 }
 
@@ -159,7 +161,11 @@ class App extends Component {
           toggleModal={this.toggleModal} />
         { isProfileOpen &&
           <Modal>
-            <Profile isProfileOpen={isProfileOpen} toggleModal={this.toggleModal} />
+            <Profile
+              isProfileOpen={isProfileOpen}
+              loadUser={this.loadUser}
+              toggleModal={this.toggleModal}
+              user={user} />
           </Modal> }
         { route === 'home'
           ? (
