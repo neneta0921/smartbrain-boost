@@ -1,5 +1,10 @@
 import React from 'react';
 
+import './Register.css';
+
+import urlConfig from '../../urlConfig';
+const REGISTER_URL = urlConfig().url.REGISTER_URL;
+
 class Register extends React.Component {
   constructor (props) {
     super(props);
@@ -23,9 +28,8 @@ class Register extends React.Component {
   }
 
   onSubmitSingIn = () => {
-    // console.log(this.state);
-    fetch('https://aqueous-inlet-35144.herokuapp.com/register', {
-      method: 'post',
+    fetch(REGISTER_URL, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: this.state.name,
@@ -34,16 +38,17 @@ class Register extends React.Component {
       })
     })
       .then(response => response.json())
-      .then(user => {
-        if (user.id) {
-          this.props.loadUser(user);
+      .then(data => {
+        console.log(data)
+        if (data.user) {
+          this.props.saveAuthTokenInSession(data.token)
+          this.props.loadUser(data.user);
           this.props.onRouteChange('home');
         }
       })
   }
 
   render() {
-    const { onRouteChange } = this.props;
 
     return (
       <article className="br3 ba dark-gray b--black-10 mv4 w-100 w-50-m w-25-l mw6 shadow-5 center">
@@ -56,7 +61,7 @@ class Register extends React.Component {
                 Name
               </label>
               <input
-                className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
+                className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100 hover-black"
                 type="text"
                 name="name"
                 id="name"
@@ -68,7 +73,7 @@ class Register extends React.Component {
                 Email
               </label>
               <input
-                className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
+                className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100 hover-black"
                 type="email"
                 name="email-address"
                 id="email-address"
@@ -80,7 +85,7 @@ class Register extends React.Component {
                 Password
               </label>
               <input
-                className="b pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
+                className="b pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100 hover-black"
                 type="password"
                 name="password"
                 id="password"

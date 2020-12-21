@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import Particles from 'react-particles-js';
-// import Clarifai from 'clarifai';
 
 import Navigation from './components/Navigation/Navigation';
 import Signin from './components/Signin/Signin';
@@ -9,7 +8,13 @@ import Logo from './components/Logo/Logo';
 import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
 import Rank from './components/Rank/Rank';
 import FaceDetection from './components/FaceDetection/FaceDetection';
+import Modal from './components/Modal/Modal';
+import Profile from './components/Profile/Profile';
 import './App.css';
+
+import urlConfig from './urlConfig';
+const API_URL = urlConfig().url.API_URL;
+const IMAGE_URL = urlConfig().url.IMAGE_URL;
 
 const particlesOptions={
   particles: {
@@ -26,16 +31,20 @@ const particlesOptions={
 const initialState = {
   input: '',
   imageUrl: '',
-  box: {},
+  boxes: [],
   route: 'signin',
   isSignedIn: false,
-  boundingBox: [],
+  // route: 'home',
+  // isSignedIn: true,
+  isProfileOpen: false,
   user: {
     id: '',
     name: '',
     email: '',
     entries: 0,
-    joined: ''
+    joined: '',
+    age: '',
+    pet: ''
   },
 }
 
@@ -45,39 +54,77 @@ class App extends Component {
     this.state = initialState;
   }
 
+  componentDidMount() {
+    const token = window.sessionStorage.getItem('token')
+    if (token) {
+      fetch('http://localhost:3000/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'authorization': token
+        }
+      })
+        .then(resp => resp.json())
+        .then(data => {
+          if(data && data.id) {
+            fetch(`http://localhost:3000/profile/${data.id}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'authorization': token
+              }
+            })
+              .then(resp => resp.json())
+              .then(user => {
+                if (user && user.email) {
+                  this.loadUser(user)
+                  this.onRouteChange('home')
+                }
+              })
+          }
+        })
+        .catch(console.log)
+    }
+  }
+
   loadUser = (data) => {
     this.setState({user: {
       id: data.id,
       name: data.name,
       email: data.email,
       entries: data.entries,
+      age: data.age,
+      pet: data.pet,
       joined: data.joined
     }})
   }
 
-  calculateFaceLocation = (data) => {
-    const regions = data.outputs[0].data.regions;
-    const faceBox = regions.map((region) => {
-      const detectedFace = region.region_info.bounding_box;
-      const image = document.getElementById('inputimage');
-      const width = Number(image.width);
-      const height = Number(image.height);
-      return {
-        leftCol: detectedFace.left_col * width,
-        topRow: detectedFace.top_row * height,
-        rightCol: width - detectedFace.right_col * width,
-        bottomRow: height - detectedFace.bottom_row * height,
-      };
-    });
-    return faceBox;
+  calculateFaceLocations = (data) => {
+    if (data && data.outputs) {
+      return data.outputs[0].data.regions.map((face) => {
+        const detectedFace = face.region_info.bounding_box;
+        const image = document.getElementById('inputimage');
+        const width = Number(image.width);
+        const height = Number(image.height);
+        return {
+          leftCol: detectedFace.left_col * width,
+          topRow: detectedFace.top_row * height,
+          rightCol: width - detectedFace.right_col * width,
+          bottomRow: height - detectedFace.bottom_row * height,
+        };
+      });
+    }
+    return
   };
 
-  displayFaceBox = (box) => {
-    this.setState({ box: box });
+  displayFaceBoxes = (boxes) => {
+    if (boxes) {
+      this.setState({ boxes: boxes });
+    }
   };
 
-  createBoundingBox = (boxArray) => {
-    const boundingBox = boxArray.map((box, i) => {
+  createBoundingBox = (boxes) => {
+    const boundingBox = boxes.map((box, i) => {
       return (
         <div
           key={i}
@@ -99,9 +146,12 @@ class App extends Component {
 
   onPictureSubmit = () => {
     this.setState({ imageUrl: this.state.input });
-    fetch('https://aqueous-inlet-35144.herokuapp.com/imageurl', {
-      method: 'post',
-      headers: { 'Content-Type': 'application/json' },
+    fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'authorization': window.sessionStorage.getItem('token')
+      },
       body: JSON.stringify({
         input: this.state.input
       })
@@ -109,9 +159,12 @@ class App extends Component {
       .then(response => response.json())
       .then((response) => {
         if(response) {
-          fetch('https://aqueous-inlet-35144.herokuapp.com/image', {
-            method: 'put',
-            headers: { 'Content-Type': 'application/json' },
+          fetch(IMAGE_URL, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'authorization': window.sessionStorage.getItem('token')
+            },
             body: JSON.stringify({
               id: this.state.user.id
             })
@@ -122,27 +175,55 @@ class App extends Component {
             })
             .catch(console.log)
         }
-        this.displayFaceBox(this.calculateFaceLocation(response))
+        this.displayFaceBoxes(this.calculateFaceLocations(response))
       })
-      .then(() => this.createBoundingBox(this.state.box))
+      .then(() => this.createBoundingBox(this.state.boxes))
       .catch((err) => console.log(err))
   };
 
+  saveAuthTokenInSession = (token) => {
+    window.sessionStorage.setItem('token', token)
+  }
+
+  deleteSession = () => {
+    window.sessionStorage.removeItem('token')
+  }
+
   onRouteChange = (route) => {
     if (route === 'signout') {
-      this.setState(initialState)
+      this.deleteSession()
+      return this.setState(initialState)
     } else if (route === 'home') {
-      this.setState({ isSignedIn: true })
+      return this.setState({
+        isSignedIn: true,
+        route: 'home'
+      })
     }
-    this.setState({ route: route })
+    return this.setState({ route: route })
   };
 
+  toggleModal = () => {
+    this.setState(prevState => ({
+      ...prevState,
+      isProfileOpen: !prevState.isProfileOpen
+    }))
+  }
+
   render() {
-    const { isSignedIn, imageUrl, route, box, boundingBox, user } = this.state;
+    const { isSignedIn, imageUrl, route, boxes, user, isProfileOpen } = this.state;
+
     return (
       <div className="App">
         <Particles className="particles" params={particlesOptions} />
-        <Navigation isSignedIn={isSignedIn} onRouteChange={this.onRouteChange} />
+        <Navigation isSignedIn={isSignedIn} onRouteChange={this.onRouteChange}
+          toggleModal={this.toggleModal} />
+        { isProfileOpen &&
+          <Modal>
+            <Profile
+              loadUser={this.loadUser}
+              toggleModal={this.toggleModal}
+              user={user} />
+          </Modal> }
         { route === 'home'
           ? (
             <div>
@@ -152,12 +233,20 @@ class App extends Component {
                 onInputChange={this.onInputChange}
                 onPictureSubmit={this.onPictureSubmit}
               />
-              <FaceDetection box={box} imageUrl={imageUrl} boundingBox={boundingBox} />
+              <FaceDetection boxes={boxes} imageUrl={imageUrl} />
             </div>
             )
           : ( route === 'signin'
-              ? <Signin loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
-              : <Register loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
+              ? <Signin
+                  loadUser={this.loadUser}
+                  onRouteChange={this.onRouteChange}
+                  saveAuthTokenInSession={this.saveAuthTokenInSession}
+                />
+              : <Register
+                  loadUser={this.loadUser}
+                  onRouteChange={this.onRouteChange}
+                  saveAuthTokenInSession={this.saveAuthTokenInSession}
+                />
             )
         }
       </div>
