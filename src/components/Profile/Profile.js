@@ -28,31 +28,32 @@ const Profile = ({ loadUser, toggleModal, user }) => {
     toggleModal();
   }
 
-  const validateInput = (data) => {
-
+  const updateUserState = () => {
+    user.name = name
+    user.age = age
+    user.pet = pet
   }
 
-  const updateUser = (name, age, pet) => {
-    user.name = name;
-    user.age = age;
-    user.pet = pet;
+  const validateInput = (dataObject) => {
+    Object.keys(dataObject).forEach(key => {
+      dataObject[key] === '' && delete dataObject[key]
+    })
+    return dataObject
   }
 
   const onProfileUpdate = (data) => {
-    console.log(data)
     if (!data.name && !data.age && !data.pet) {
       return
     }
-    const updateItem = validateInput(data)
-    updateUser(data.name, data.age, data.pet)
-    console.log(user.name, user.age, user.pet)
+    updateUserState()
+    const updateData = validateInput(data)
     fetch(`http://localhost:3000/profile/${user.id}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': window.sessionStorage.getItem('token')
       },
-      body: JSON.stringify({ formInput: data })
+      body: JSON.stringify({ formInput: updateData })
     }).then(resp => {
       if (resp.status === 200 || resp.status === 304) {
         closeModal();
