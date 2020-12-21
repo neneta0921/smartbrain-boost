@@ -54,33 +54,73 @@ class App extends Component {
     this.state = initialState;
   }
 
+  componentDidMount() {
+    const token = window.sessionStorage.getItem('token')
+    if (token) {
+      fetch('http://localhost:3000/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'authorization': token
+        }
+      })
+        .then(resp => resp.json())
+        .then(data => {
+          if(data && data.id) {
+            fetch(`http://localhost:3000/profile/${data.id}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'authorization': token
+              }
+            })
+              .then(resp => resp.json())
+              .then(user => {
+                if (user && user.email) {
+                  this.loadUser(user)
+                  this.onRouteChange('home')
+                }
+              })
+          }
+        })
+        .catch(console.log)
+    }
+  }
+
   loadUser = (data) => {
     this.setState({user: {
       id: data.id,
       name: data.name,
       email: data.email,
       entries: data.entries,
+      age: data.age,
+      pet: data.pet,
       joined: data.joined
     }})
   }
 
   calculateFaceLocations = (data) => {
-    return data.outputs[0].data.regions.map((face) => {
-      const detectedFace = face.region_info.bounding_box;
-      const image = document.getElementById('inputimage');
-      const width = Number(image.width);
-      const height = Number(image.height);
-      return {
-        leftCol: detectedFace.left_col * width,
-        topRow: detectedFace.top_row * height,
-        rightCol: width - detectedFace.right_col * width,
-        bottomRow: height - detectedFace.bottom_row * height,
-      };
-    });
+    if (data && data.outputs) {
+      return data.outputs[0].data.regions.map((face) => {
+        const detectedFace = face.region_info.bounding_box;
+        const image = document.getElementById('inputimage');
+        const width = Number(image.width);
+        const height = Number(image.height);
+        return {
+          leftCol: detectedFace.left_col * width,
+          topRow: detectedFace.top_row * height,
+          rightCol: width - detectedFace.right_col * width,
+          bottomRow: height - detectedFace.bottom_row * height,
+        };
+      });
+    }
+    return
   };
 
   displayFaceBoxes = (boxes) => {
-    this.setState({ boxes: boxes });
+    if (boxes) {
+      this.setState({ boxes: boxes });
+    }
   };
 
   createBoundingBox = (boxes) => {
@@ -107,8 +147,11 @@ class App extends Component {
   onPictureSubmit = () => {
     this.setState({ imageUrl: this.state.input });
     fetch(API_URL, {
-      method: 'post',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'authorization': window.sessionStorage.getItem('token')
+      },
       body: JSON.stringify({
         input: this.state.input
       })
@@ -117,8 +160,11 @@ class App extends Component {
       .then((response) => {
         if(response) {
           fetch(IMAGE_URL, {
-            method: 'put',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'authorization': window.sessionStorage.getItem('token')
+            },
             body: JSON.stringify({
               id: this.state.user.id
             })
@@ -135,13 +181,25 @@ class App extends Component {
       .catch((err) => console.log(err))
   };
 
+  saveAuthTokenInSession = (token) => {
+    window.sessionStorage.setItem('token', token)
+  }
+
+  deleteSession = () => {
+    window.sessionStorage.removeItem('token')
+  }
+
   onRouteChange = (route) => {
     if (route === 'signout') {
+      this.deleteSession()
       return this.setState(initialState)
     } else if (route === 'home') {
-      this.setState({ isSignedIn: true })
+      return this.setState({
+        isSignedIn: true,
+        route: 'home'
+      })
     }
-    this.setState({ route: route })
+    return this.setState({ route: route })
   };
 
   toggleModal = () => {
@@ -162,7 +220,6 @@ class App extends Component {
         { isProfileOpen &&
           <Modal>
             <Profile
-              isProfileOpen={isProfileOpen}
               loadUser={this.loadUser}
               toggleModal={this.toggleModal}
               user={user} />
@@ -180,8 +237,16 @@ class App extends Component {
             </div>
             )
           : ( route === 'signin'
-              ? <Signin loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
-              : <Register loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
+              ? <Signin
+                  loadUser={this.loadUser}
+                  onRouteChange={this.onRouteChange}
+                  saveAuthTokenInSession={this.saveAuthTokenInSession}
+                />
+              : <Register
+                  loadUser={this.loadUser}
+                  onRouteChange={this.onRouteChange}
+                  saveAuthTokenInSession={this.saveAuthTokenInSession}
+                />
             )
         }
       </div>

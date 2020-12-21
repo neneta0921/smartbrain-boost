@@ -6,8 +6,8 @@ const FaceDetection = ({ boxes, imageUrl }) => {
     <div className="center ma">
       <div className="absolute mt2">
         {
-          imageUrl &&
-          <h4>Detected {boxes.length} person.</h4>
+          boxes.length > 0 &&
+          <h4>{`Detected ${boxes.length} person.`}</h4>
         }
         <img id="inputimage" alt="" src={imageUrl} width="500px" height="auto" />
         {

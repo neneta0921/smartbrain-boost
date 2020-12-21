@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Profile.css';
 
-const Profile = ({ isProfileOpen, loadUser, toggleModal, user }) => {
+const Profile = ({ loadUser, toggleModal, user }) => {
 
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
@@ -23,21 +23,41 @@ const Profile = ({ isProfileOpen, loadUser, toggleModal, user }) => {
     }
   }
 
+  const closeModal = () => {
+    loadUser(user);
+    toggleModal();
+  }
+
+  const validateInput = (data) => {
+
+  }
+
   const updateUser = (name, age, pet) => {
     user.name = name;
     user.age = age;
-    user.pet = pet
+    user.pet = pet;
   }
 
   const onProfileUpdate = (data) => {
+    console.log(data)
+    if (!data.name && !data.age && !data.pet) {
+      return
+    }
+    const updateItem = validateInput(data)
     updateUser(data.name, data.age, data.pet)
+    console.log(user.name, user.age, user.pet)
     fetch(`http://localhost:3000/profile/${user.id}`, {
-      method: 'post',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': window.sessionStorage.getItem('token')
+      },
       body: JSON.stringify({ formInput: data })
     }).then(resp => {
-        toggleModal();
-        loadUser(user)
+      if (resp.status === 200 || resp.status === 304) {
+        closeModal();
+        return
+      }
     }).catch(console.log)
   }
 
